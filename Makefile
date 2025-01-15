@@ -20,33 +20,13 @@ SHELL = /bin/bash
 #   3. Files you want to include in your final submission cannot match the
 #      test*.cpp pattern.
 
-#######################
-# TODO (begin) #
-#######################
-# Change 'youruniqname' to match your UM uniqname (no quote marks).
-UNIQNAME    = youruniqname
-
-# Change the right hand side of the identifier to match the project identifier
-# given in the project or lab specification.
-IDENTIFIER  = EEC50281EEC50281EEC50281EEC50281EEC50281
-
-# Change 'executable' to match the command name given in the project spec.
 EXECUTABLE  = connect4
 
 # The following line looks for a project's main() in files named project*.cpp,
 # executable.cpp (substituted from EXECUTABLE above), or main.cpp
 PROJECTFILE = $(or $(wildcard project*.cpp $(EXECUTABLE).cpp), main.cpp)
-# If main() is in another file delete line above, edit and uncomment below
-#PROJECTFILE = mymainfile.cpp
-
-# This is the path from the CAEN home folder to where projects will be
-# uploaded. (eg. /home/mmdarden/eecs281/project1)
-# Change this if you prefer a different path.
-# REMOTE_PATH := eecs281_$(EXECUTABLE)_sync  # /home/mmdarden/eecs281_proj0_sync
 REMOTE_PATH := eecs281_$(EXECUTABLE)_sync
-#######################
-# TODO (end) #
-#######################
+
 
 # enables c++17 on CAEN or 281 autograder
 PATH := /usr/um/gcc-11.3.0/bin:$(PATH)
