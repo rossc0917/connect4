@@ -10,8 +10,8 @@ Future improvements to reinforcement learning will include <ins>Q-Learning</ins>
 Future improvements:
 1. Clean up bugs (COMPLETE)
 2. Allow users to choose which "Game Piece" they want (go first or second) (COMPLETE)
-3. Provide different levels of difficulty (easy, medium, hard, extreme)
-4. Q-Learning Reinforcement Learning
+3. Q-Learning Reinforcement Learning
+4. Provide different levels of difficulty (easy, medium, hard, extreme)
 5. Neural Network
 
 Despite Connect 4 being a _solved game_, I think it would be beneficial to practice working with basic neural networks 
