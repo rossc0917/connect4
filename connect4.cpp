@@ -1,7 +1,12 @@
 #include <iostream>
 #include <vector>
+#include <limits>
+#include <thread>
+#include <chrono>
 
 using namespace std;
+
+int turn = 0;
 
 // Energy Matrix
 const int energy[6][7] = {
@@ -12,6 +17,35 @@ const int energy[6][7] = {
     {4, 6, 7, 10, 7, 6, 4},
     {3, 4, 5, 7, 5, 4, 3}
 };
+
+void setupGame() {
+    int turnChoice = -1;
+
+    cout << "Please select your game piece.\n";
+    cout << "0 = Player 0   1 = Player 1\n";
+
+    while (true) {
+        cout << "Enter your choice (0 or 1): ";
+
+        if (cin >> turnChoice) {
+            if (turnChoice == 0) {
+                cout << "You have selected: Player 0. You will go first.\n";
+                turn--;
+                break;
+            } else if (turnChoice == 1) {
+                cout << "You have selected: Player 1. You will go second.\n";
+                break;
+            } else {
+                cout << "Invalid option. Please select another game piece.\n";
+            }
+        } else {
+            cout << "Invalid input. Please enter 0 or 1.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
+
 
 // Initialize Game Board
 void initializeBoard(char board[6][7]) {
@@ -46,17 +80,25 @@ void print_board(char board[6][7]) {
 void insert_piece(char board[6][7], char gamePiece, int column) {
     int emptyRow = 0;
 
-    if (column < 0 || column > 6) {
-        while (column < 0 || column > 6) {
-            cout << "Invalid column. Please select a column between 0 and 6.\n";
-            cout << "Select a column (0-6) to place your game piece: ";
-            cin >> column;
-            cout << endl;
+    while (true) {
+        if (column >= 0 && column <= 6) {
+            break;
+        }
+
+        cout << "Invalid column. Please select a column between 0 and 6.\n";
+        cout << "Select a column (0-6) to place your game piece: ";
+
+        if (!(cin >> column)) {
+            cout << "Invalid input. Please enter a number between 0 and 6.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
     }
 
     if(board[0][column] != '.') {
         cout << "This column is full. Please select a different column: \n";
+        turn--;
+        print_board(board);
         return;
     }
 
@@ -75,13 +117,27 @@ void insert_piece(char board[6][7], char gamePiece, int column) {
 // Function for performing a turn
 void perform_turn(char board[6][7], int playerNum) {
     char gamePiece = (playerNum == 0) ? 'X' : 'O';
+    int columnSelection;
+    
+    print_board(board);
 
-    int columnSelection = 0;
-    cout << "Select a column (0-6) to place your game piece: ";
-    cin >> columnSelection;
-    cout << endl;
-    cout << "You selected column: " << columnSelection << endl;
-    insert_piece(board, gamePiece, columnSelection);
+    while (true) {
+        cout << "Select a column (0-6) to place your game piece: ";
+        
+        if (cin >> columnSelection) {
+            if (columnSelection >= 0 && columnSelection <= 6) {
+                cout << "You selected column: " << columnSelection << endl;
+                insert_piece(board, gamePiece, columnSelection);
+                break;
+            } else {
+                cout << "Invalid column. Please select a column between 0 and 6.\n";
+            }
+        } else {
+            cout << "Invalid input. Please enter an integer between 0 and 6.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
 }
 
 // Checking for Connect 4
@@ -224,7 +280,7 @@ int minimax(char board[6][7], int depth, bool isMaximizingPlayer) {
     // if the score is worse than the current range, then prune the branch.
 }
 
-int get_best_move (char board[6][7]) {
+int get_best_move(char board[6][7]) {
     int bestScore = INT16_MIN;
     int bestCol = -1; 
 
@@ -245,37 +301,51 @@ int get_best_move (char board[6][7]) {
 }
 
 int main() {
-    int turn = 0;
 
-    char board[6][7];
-
-    initializeBoard(board);
-
-    while (!is_full(board)) {
-        int playerNum = 0;
-
-        if (turn % 2 == 0) {
-            playerNum = 0;
-            cout << "Computer's Turn:\n";
-            int chosenCol = get_best_move(board);
-            insert_piece(board, 'X', chosenCol);
-        } else {
-            playerNum = 1;
-            perform_turn(board, playerNum);
-        }
-
-        if (turn >= 6) {
-            if (check_for_Connect_4(board, playerNum)) {
-                cout << "Player " << playerNum << " wins!\n";
-                return 0;
-            }
-        }
-        ++turn;
-    }
+    int gameState = 0;
     
+    while (gameState == 0) {
+        setupGame();
+
+        char board[6][7];
+
+        initializeBoard(board);
+
+        while (!is_full(board)) {
+            int playerNum = 0;
+
+            if (turn % 2 == 0) {
+                playerNum = 0;
+                cout << "Computer's Turn:\n";
+                this_thread::sleep_for(chrono::seconds(1));
+                int chosenCol = get_best_move(board);
+                insert_piece(board, 'X', chosenCol);
+            } else {
+                playerNum = 1;
+                perform_turn(board, playerNum);
+            }
+
+            if (turn >= 6) {
+                if (check_for_Connect_4(board, playerNum)) {
+                    cout << "Player " << playerNum << " wins!\n";
+                    break;
+                }
+            }
+
+            if(is_full(board)) {
+                cout << "Result: Tie\n";
+            }
+
+            ++turn;
+        }
+        
+        char playAgain;
+        cout << "Would you like to play again? (Y/N)\n";
+        cin >> playAgain;
+        if (playAgain != 'Y' && playAgain != 'y') {
+            gameState++;
+        } 
+    }
+
     return 0;
 }
-
-// Errors: 
-// When a user inputs the incorrect column, they do not get to use their turn; instead the computer goes, skipping the user
-// Ties have not been implemented

@@ -8,8 +8,8 @@ The goal is to add different levels of difficulty, as well as a potential capabi
 Future improvements to reinforcement learning will include Q-Learning and potentially a Neural Network.
 
 Future improvements:
-1. Clean up bugs
-2. Allow users to choose which "Game Piece" they want (go first or second)
+1. Clean up bugs (COMPLETE)
+2. Allow users to choose which "Game Piece" they want (go first or second) (COMPLETE)
 3. Provide different levels of difficulty (easy, medium, hard, extreme)
 4. Q-Learning Reinforcement Learning
 5. Neural Network
