@@ -13,3 +13,6 @@ Future improvements:
 3. Provide different levels of difficulty (easy, medium, hard, extreme)
 4. Q-Learning Reinforcement Learning
 5. Neural Network
+
+Despite Connect 4 being a solved game, I think it would be beneficial to practice working with basic neural networks 
+and understanding how a model can develop different strategies to win.
