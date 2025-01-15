@@ -14,5 +14,5 @@ Future improvements:
 4. Q-Learning Reinforcement Learning
 5. Neural Network
 
-Despite Connect 4 being a __solved game__, I think it would be beneficial to practice working with basic neural networks 
+Despite Connect 4 being a _solved game_, I think it would be beneficial to practice working with basic neural networks 
 and understanding how a model can develop different strategies to win.
