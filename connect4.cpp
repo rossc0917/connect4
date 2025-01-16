@@ -1,4 +1,4 @@
-// UPDATED VERSION AS OF: 1/15/2025 //
+// Connect 4 AI - Version 1.0 //
 
 #include <iostream>
 #include <vector>

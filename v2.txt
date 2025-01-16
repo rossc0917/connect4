@@ -1,0 +1,266 @@
+// CONNECT 4 AI - Version 2.0 //
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+#include <algorithm>
+#include <thread>
+#include <chrono>
+#include <unordered_map>
+
+using namespace std;
+
+// Constants for Q-learning
+const double ALPHA = 0.3; // Learning Rate
+const double GAMMA = 0.9;
+const double EPSILON = 0.2; // Exploration vs Exploitation
+
+// Q-table stored as a map from state to action-value vector
+unordered_map<string, vector<double>> qTable;
+
+// Game setup and state management
+void initializeBoard(char board[6][7]) {
+    for (int row = 0; row < 6; ++row) {
+        for (int col = 0; col < 7; ++col) {
+            board[row][col] = '.';  // Empty cells
+        }
+    }
+}
+
+bool is_full(char board[6][7]) {
+    for (int col = 0; col < 7; ++col) {
+        if (board[0][col] == '.') {
+            return false; // Not full if there's an empty spot in the top row
+        }
+    }
+    return true;
+}
+
+bool isValidMove(char board[6][7], int col) {
+    return board[0][col] == '.';
+}
+
+int getNextAvailableRow(char board[6][7], int col) {
+    for (int row = 5; row >= 0; --row) {
+        if (board[row][col] == '.') {
+            return row;
+        }
+    }
+    return -1;
+}
+
+void makeMove(char board[6][7], int col, char piece) {
+    int row = getNextAvailableRow(board, col);
+    if (row != -1)
+        board[row][col] = piece;
+}
+
+// Check if a player has won (4 in a row)
+bool checkWin(char board[6][7], char piece) {
+    // Check horizontal, vertical, and both diagonal directions for a 4-in-a-row
+    for (int row = 0; row < 6; ++row) {
+        for (int col = 0; col < 7; ++col) {
+            if (board[row][col] == piece) {
+                if (col + 3 < 7 && board[row][col+1] == piece && board[row][col+2] == piece && board[row][col+3] == piece)
+                    return true;
+                if (row + 3 < 6 && board[row+1][col] == piece && board[row+2][col] == piece && board[row+3][col] == piece)
+                    return true;
+                if (row + 3 < 6 && col + 3 < 7 && board[row+1][col+1] == piece && board[row+2][col+2] == piece && board[row+3][col+3] == piece)
+                    return true;
+                if (row - 3 >= 0 && col + 3 < 7 && board[row-1][col+1] == piece && board[row-2][col+2] == piece && board[row-3][col+3] == piece)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+// Print the board state
+void printBoard(char board[6][7]) {
+    for (int row = 0; row < 6; ++row) {
+        for (int col = 0; col < 7; ++col) {
+            cout << board[row][col] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+}
+
+// Helper functions for Q-learning
+string getBoardState(char board[6][7]) {
+    string state = "";
+    for (int i = 0; i < 6; ++i)
+        for (int j = 0; j < 7; ++j)
+            state += board[i][j];
+    return state;
+}
+
+int getBestAction(char board[6][7]) {
+    // Get all valid columns where a piece can be placed
+    vector<int> validCols;
+    for (int col = 0; col < 7; ++col) {
+        if (isValidMove(board, col)) {
+            validCols.push_back(col);
+        }
+    }
+
+    // If no valid column (this should not happen unless the board is full)
+    if (validCols.empty()) {
+        return -1; // Indicating no valid move
+    }
+
+    // For now, let's just randomly pick a valid column from the available options
+    int randomIndex = rand() % static_cast<int>(validCols.size());
+    return validCols[randomIndex];
+}
+
+
+// Ensure the state is initialized in the Q-table
+void initializeQValues(const string &state) {
+    if (qTable.find(state) == qTable.end()) {
+        vector<double> qValues(7, 0.0); // Initialize with 7 possible actions (columns)
+        qTable[state] = qValues;
+    }
+}
+
+// Update Q-values for the state-action pair
+void updateQValue(const string &state, int action, double reward, const string &nextState) {
+    initializeQValues(state);
+    initializeQValues(nextState);
+
+    double maxNextQ = 0.0;
+    if (qTable.find(nextState) != qTable.end()) {
+        maxNextQ = *max_element(qTable[nextState].begin(), qTable[nextState].end());
+    }
+
+    double &qValue = qTable[state][action];
+    qValue += ALPHA * (reward + GAMMA * maxNextQ - qValue);
+}
+
+// Epsilon-greedy action selection
+int epsilonGreedy(const string &state, char board[6][7]) {
+    initializeQValues(state);  // Ensure the state is initialized
+    if ((rand() % 100) / 100.0 < EPSILON)
+        return rand() % 7; // Explore
+    return getBestAction(board); // Exploit
+}
+
+// Training
+void trainAgent(int episodes) {
+    for (int episode = 0; episode < episodes; ++episode) {
+        char board[6][7];
+        initializeBoard(board);
+
+        string state = getBoardState(board);
+        int turn = 0; // Use turn counter for alternating between 'X' and 'O'
+        while (!is_full(board)) {
+            char currentPiece = (turn % 2 == 0) ? 'X' : 'O'; // Alternate between 'X' and 'O'
+            int action = epsilonGreedy(state, board);  // Get the AI's action using epsilon-greedy
+
+            if (!isValidMove(board, action))
+                continue;
+
+            // AI places either 'X' or 'O'
+            makeMove(board, action, currentPiece);
+            printBoard(board);
+            string nextState = getBoardState(board);
+
+            double reward = 0.0;
+            if (checkWin(board, currentPiece)) {
+                reward = (currentPiece == 'X') ? 1.0 : -1.0;  // 'X' wins, reward = 1.0; 'O' wins, reward = -1.0
+            } else if (is_full(board)) {
+                reward = 0.0;  // Tie game, no reward
+            }
+
+            updateQValue(state, action, reward, nextState);
+            state = nextState;
+
+            if (reward != 0.0)  // End the episode if either 'X' or 'O' wins
+                break;
+
+            turn++;  // Alternate turns between 'X' and 'O'
+        }
+    }
+}
+
+void aiTurn(char board[6][7], char aiPiece) {
+    // Get the best column for the AI to place a piece
+    int col = getBestAction(board);
+    
+    // Make the move if a valid column was found
+    if (col != -1) {
+        makeMove(board, col, aiPiece);
+    }
+}
+
+// Game loop
+int main() {
+    srand(static_cast<unsigned int>(time(0)));  // Seeding random number generator
+
+    // Train the AI before starting the game
+    int trainingEpisodes = 1000;  // Number of episodes to train
+    cout << "Training AI for " << trainingEpisodes << " episodes...\n";
+    trainAgent(trainingEpisodes);  // Training the AI
+
+    int gameState = 0;
+
+    while (gameState == 0) {
+        char board[6][7];
+        initializeBoard(board);
+
+        int turn = 0;
+        while (!is_full(board)) {
+
+            // Print the current board state
+            printBoard(board);
+
+            if (turn % 2 == 0) {
+                cout << "Computer's Turn:\n";
+                this_thread::sleep_for(chrono::seconds(1));
+
+                // Get the best move using the trained agent
+                string state = getBoardState(board);
+                aiTurn(board, 'X');
+            } else {
+                cout << "Player's Turn:\n";
+                int chosenCol;
+                cout << "Enter the column (0-6): ";
+                cin >> chosenCol;
+                while (!isValidMove(board, chosenCol)) {
+                    cout << "Invalid move. Try again: ";
+                    cin >> chosenCol;
+                }
+                makeMove(board, chosenCol, 'O');
+            }
+
+            // Check for a win after the move
+            if (checkWin(board, 'X')) {
+                printBoard(board);
+                cout << "Computer wins!\n";
+                break;
+            } else if (checkWin(board, 'O')) {
+                printBoard(board);
+                cout << "Player wins!\n";
+                break;
+            }
+
+            ++turn;
+        }
+
+        if (is_full(board)) {
+            printBoard(board);
+            cout << "It's a tie!\n";
+        }
+
+        char playAgain;
+        cout << "Would you like to play again? (Y/N): ";
+        cin >> playAgain;
+        if (playAgain != 'Y' && playAgain != 'y') {
+            gameState++;
+        }
+    }
+
+    return 0;
+}
